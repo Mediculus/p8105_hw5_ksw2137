@@ -32,7 +32,8 @@ scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + 
             theme(legend.position = "bottom") +
             theme(plot.title = element_text(hjust = 0.5, size = 12),
-                  plot.subtitle = element_text(hjust = 0.5, size = 8))
+                  plot.subtitle = element_text(hjust = 0.5, size = 8),
+                  plot.caption = element_text(hjust = 0, size = 7))
           )
 
 ```
@@ -87,7 +88,7 @@ new_iris <-                                                             # a data
 The `new_iris` variable stores new dataframe after applying `avgchar_na_replace` function with `purrr::map2` (`.x` for dataframe and `.y` for character input). If a column is numeric, it will automatically input average of column. Example: `r round(mean(pull(iris_with_missing, Sepal.Length), na.rm = TRUE), 1)`, which is the average of available numbers in `Sepal.Length` column, replaces `NA` in that column. `skimr::skim(new_iris)` reveals no missing variables.
 
 # Problem 2 
-We have a 20 files that contains 8-weeks longitudinal study result files for 10 subjects under experiment and control arm. First, we need to consolidate this into 1 dataframe.
+We have 20 files that contains 8-weeks longitudinal study result files for 10 subjects under experiment and control arm. First, we need to consolidate this into 1 dataframe.
 
 ```{r data_read}
 
@@ -130,7 +131,7 @@ Our clean dataframe is a `r nrow(clean_exp_df)` x `r ncol(clean_exp_df)` matrix 
 
 Now that it's tidied, we could start exploring patterns and such. Below is a spaghetti plot that traces the data based on subject and their group.
 
-```{r spaghetti_all}
+```{r spaghetti_all, fig.width = 8}
 # spaghetti plot of each subject by control/experiment
 # requires plotting twice to separate control/experiment
 
@@ -149,7 +150,15 @@ ggplot(clean_exp_df %>%                                                        #
   geom_line(data = clean_exp_df %>%                                            # line color by subject
               filter(group == "Control"), 
             aes(x = week, y = observation, color = subj_id, group = subj_id), 
-            size = 0.8, alpha = 0.5)
+            size = 0.8, alpha = 0.5) +
+  guides(color = guide_legend(override.aes = list(size = 5))) + # resize the color code for legends
+  labs(x = "Week",
+       y = "Observed Measurement",
+       caption = "Figure 1: Spaghetti plot of 10 subjects over 8 weeks under experimental and control group",
+       color = "Subject ID",
+       shape = "Group"
+       ) +
+  theme(legend.position = "right")
 
 ```
 
@@ -162,7 +171,12 @@ clean_exp_df %>%                                                # base for facet
   ggplot(aes(x = week, y = observation, color = subj_id)) +     # give color by subjects
   geom_point(size = 2) + 
   geom_line(aes(group = subj_id), alpha = 0.7, size = 0.6) +
-  facet_grid(. ~ group)                                         # facet by group
+  facet_grid(. ~ group) +                                       # facet by group
+  guides(color = guide_legend(override.aes = list(size = 5))) + # resize the color code for legends
+  labs(x = "Week",
+       y = "Observed Measurement",
+       caption = "Figure 2: Faceted spaghetti plot of 10 subjects over 8 weeks by group",
+       color = "Subject ID")
 
 ```
 
