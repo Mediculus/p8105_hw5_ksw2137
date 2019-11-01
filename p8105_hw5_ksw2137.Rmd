@@ -1,0 +1,86 @@
+---
+title: "P8105 Data Science I - Homework 5"
+author: "Kevin S.W."
+date: "10/31/2019"
+output: github_document
+---
+
+```{r setup, include = FALSE, message = FALSE, warning = FALSE}
+
+# global default settings for chunks
+knitr::opts_chunk$set(echo = TRUE, 
+                      fig.width = 10, 
+                      fig.align = "center",
+                      results = "asis"
+                      )
+
+# loaded packages; placed here to be able to load global settings
+Packages <- c("tidyverse", "dplyr")
+invisible(lapply(Packages, library, character.only = TRUE))
+
+
+
+# global settings for color palettes
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
+# theme global setting for ggplot
+theme_set(theme_minimal() + 
+            theme(legend.position = "bottom") +
+            theme(plot.title = element_text(hjust = 0.5, size = 12),
+                  plot.subtitle = element_text(hjust = 0.5, size = 8))
+          )
+
+```
+
+# Problem 1
+
+Dataframe setup using the codes given by the class.
+
+```{r problem_setup}
+
+# load tidyverse (although already loaded prior)
+library(tidyverse)                                   
+
+# setting seed for reproducibility
+set.seed(10)
+
+# loads native data in R and applies NA randomly
+iris_with_missing = iris %>% 
+  map_df(~replace(.x, sample(1:150, 20), NA)) %>%
+  mutate(Species = as.character(Species))
+
+```
+
+After setting this up, below we have a function that:
+
+* Fills missing numeric variables with the mean of non-missing values within the column
+* Fills missing character variables with character of choice (defaults "virginica")
+
+```{r function_soln}
+
+# replace numeric with average, character with input of choice
+avgchar_na_replace <- function(vec, char_replace = "virginica") {     # function that takes in df and char input 
+  if (!is.numeric(vec) & !is.character(vec)) {                        # a quick check if input is character/numeric
+    stop("Argument should only be numeric or character vector")       # error message
+  } else if (is.character(vec)) {                                     # if character, replace with char input
+    replace_na(vec, char_replace)
+  } else if (is.numeric(vec)) {                                       # if numeric, will return a mean of the vector
+    round(
+      replace_na(                                                     # with 1 decimal
+        vec, mean(vec, na.rm = TRUE)), 1)
+  }
+}
+
+new_iris <-                                                             # a dataframe that stores the results
+  map2(.x = iris_with_missing,                                          # map function that utilizes function above
+       .y = "virginica", 
+       ~avgchar_na_replace(vec = .x, char_replace = .y)) %>% 
+  as_tibble()
+
+```
+
