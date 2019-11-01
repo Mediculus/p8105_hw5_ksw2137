@@ -183,8 +183,16 @@ clean_exp_df %>%                                                # base for facet
 Now that it's split between control and experiment, it's much less cluttered and now we could see that the experiment group's observed data increases as the week goes by for all subjects while it stays relatively flat in the control group. 
 
 # Problem 3
+In this problem, we are going the be taking our hands on some simple linear regression simulation, which has a general formula of: $$y_i=\beta_0 + \beta_1\cdot x_{i1} + \epsilon_i$$
 
-When designing an experiment or analysis, a common question is whether it is likely that a true effect will be detected – put differently, whether a false null hypothesis will be rejected. The probability that a false null hypothesis is rejected is referred to as power, and it depends on several factors, including: the sample size; the effect size; and the error variance. In this problem, you will conduct a simulation to explore power in a simple linear regression.
+We will be running the simulation under several assumptions:
+
+* $n = 30$
+* $\beta_0 = 2$
+* $x_i\sim N(0,1)$
+* $\sigma^2 = 50$
+
+We will then vary $\beta_1=\{0, 1, 2, 3, 4, 5, 6 \}$
 
 ```{r lin_regress}
 
@@ -217,8 +225,37 @@ value_df <- value_stor %>%
   unnest() %>% 
   unnest()
 
+reject_prop <- value_df %>% 
+  group_by(beta1_values) %>% 
+  summarize(null_reject = sum(p_val < 0.05),
+            total_obs = n()) %>% 
+  mutate(
+    rate_reject = (null_reject/total_obs) * 100,
+    beta1_values = as_factor(beta1_values)
+  )
+
+reject_prop %>% 
+  ggplot(aes(x = beta1_values, y = rate_reject, color = beta1_values, fill = beta1_values)) +
+  geom_bar(stat = "identity")
+
+value_df %>% 
+  group_by(beta1_values) %>% 
+  summarize(mean_beta1_hat = mean(beta1_hat)) %>% 
+  mutate(beta1_values = as_factor(beta1_values)) %>% 
+  ggplot(aes(x = beta1_values, y = mean_beta1_hat, color = beta1_values, fill = beta1_values)) +
+  geom_point(alpha = 0.7) +
+  geom_line(alpha = 0.7)
+
+value_df %>% 
+  group_by(beta1_values) %>% 
+  filter(beta1_hat < 0.05) %>% 
+  summarize(mean_beta_reject = mean(beta1_hat)) %>% 
+  mutate(beta1_values = as_factor(beta1_values)) %>% 
+  ggplot(aes(x = beta1_values, y = mean_beta_reject, color = beta1_values, fill = beta1_values)) +
+  geom_point(alpha = 0.7) +
+  geom_line(alpha = 0.7)
+
 ```
 
 
-Make a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of β2 on the x axis. Describe the association between effect size and power.
 Make a plot showing the average estimate of β̂ 1 on the y axis and the true value of β1 on the x axis. Make a second plot (or overlay on the first) the average estimate of β̂ 1 only in samples for which the null was rejected on the y axis and the true value of β1 on the x axis. Is the sample average of β̂ 1 across tests for which the null is rejected approximately equal to the true value of β1? Why or why no
