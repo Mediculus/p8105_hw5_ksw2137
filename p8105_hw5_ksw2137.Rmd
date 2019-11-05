@@ -1,7 +1,7 @@
 ---
 title: "P8105 Data Science I - Homework 5"
 author: "Kevin S.W.   UNI: ksw2137"
-date: "10/31/2019"
+date: "11/05/2019"
 output: github_document
 ---
 
@@ -24,7 +24,7 @@ theme_set(theme_minimal() +
             theme(legend.position = "bottom") +
             theme(plot.title = element_text(hjust = 0.5, size = 12),
                   plot.subtitle = element_text(hjust = 0.5, size = 8),
-                  plot.caption = element_text(hjust = 0, size = 7))
+                  plot.caption = element_text(hjust = 0, size = 9))
           )
 
 ```
@@ -130,7 +130,7 @@ clean_exp_df %>%
   geom_line(aes(x = week, y = observation, group = subj_id, color = group),    # line color by group
             size = 0.8, alpha = 0.6) +
   
-  # another set of geom_point/_line for control group. Alpha is differentiated to aid discernment
+  # another set of geom_point/line for control group.
   geom_point(data = clean_exp_df %>%                                           # point plot for experiment group 
                filter(group == "Experiment"),
              aes(x = week, y = observation, color = group), 
@@ -147,26 +147,26 @@ clean_exp_df %>%
 
 ```
 
-Per above, experiment group's observed data increases as the week goes by for all subjects while control stays relatively flat. This suggests treatment in experimental group have a positive correlation. Next step is testing if difference between groups is statistically significant or not. 
+Per above, experiment group's observed data increases as the week goes progresses while control stays relatively flat. This suggests treatment in experimental group have a positive correlation while control has ~0 correlation (which is expected). 
 
 # Problem 3
 
 ### Obtaining Simulation Data
-In this problem, we are going to be trying our hands on some simple linear regression simulation, which has a general formula of: $$y_i=\beta_0 + \beta_1\cdot x_{i1} + \epsilon_i$$
+In this problem, we are going to be trying our hands on some simple linear regression simulation, which has a general formula of: yi = β0 + β1 xi1 + ϵi
 
 We will be running the simulation under several assumptions:
 
-* $n = 30$
-* $\beta_0 = 2$
-* $x_i\sim N(0,1)$
-* $\sigma^2 = 50$
+* n = 30
+* β0 = 2
+* xi1 ~ N(0,1)
+* σ^2 = 50
 
-We will then vary our "true" slope, $\beta_1=\{0, 1, 2, 3, 4, 5, 6 \}$
+We will then vary our "true" slope, β1=\{0,1,2,3,4,5,6\}
 
 ```{r slr_df_generate}
 
 # general simple linear regression simulation function...
-slr_sim <- function(n, beta0 = 2, beta1, var) {  # function with beta0 default = 2
+slr_sim <- function(n, beta0 = 2, beta1, var) {             # function with beta0 default = 2
   
   sim_data = tibble(
     x = rnorm(n, mean = 0, sd = 1),                         # x pulled from standard normal distro
@@ -182,7 +182,7 @@ slr_sim <- function(n, beta0 = 2, beta1, var) {  # function with beta0 default =
   )
 }
 
-# code to run 10,000 simulations per beta1 of 1-6 and obtain beta1_hat and p-value
+# code to run 10,000 simulations per beta1 of 0-6 and obtain beta1_hat and p-value
 beta_value_df <- tibble(
   beta1_values = 0:6) %>%                                         # make a column of our "true" beta1 values
   mutate(                                                         # apply our beta1 to the linear regression fn
@@ -195,62 +195,69 @@ beta_value_df <- tibble(
 
 ```
 
-Our resulting dataframe contains `r nrow(beta_value_df)` rows which correspond to 10,000 observations per $\beta_1$. It has `r ncol(beta_value_df)`, which stores the true `beta1`, `beta1_hat`, and `p_val`. Now that we've obtained our datapoints for each $\beta_1=\{0, 1, 2, 3, 4, 5, 6 \}$, we can plot and see the relationship of the estimated $\hat\beta_1$ against the true $\beta_1$. 
+Our resulting dataframe contains `r nrow(beta_value_df)` rows which correspond to `r nrow(beta_value_df)/length(unique(pull(beta_value_df, beta1_values)))` observations per true β1. It has `r ncol(beta_value_df)` columns, which stores the true `beta1`, `beta1_hat`, and `p_val`. 
 
 ### Relationship between Effect Size and Power
-First, we'll graph the proportion of $p-value < 0.05$, which indicates the power of the test. 
+First, we'll graph the proportion of p-value < 0.05, which indicates the power of the test. 
 
 ```{r slr_power}
 
 beta_value_df %>% 
-  group_by(beta1_values) %>% 
-  summarize(null_reject = sum(p_val < 0.05),
-            total_obs = n()) %>% 
+  group_by(beta1_values) %>%                                  # group by true beta1 values
+  summarize(null_reject = sum(p_val < 0.05),                  # counts # of rejected nulls per true beta1 value
+            total_obs = n()) %>%                              # count total obs per true beta1 value
   mutate(
-    rate_reject = (null_reject/total_obs) * 100,
-    beta1_values = as_factor(beta1_values)
+    rate_reject = (null_reject/total_obs) * 100,              # make a new column with rate of null rejection
+    beta1_values = as_factor(beta1_values)                    # turn true beta1 value to factor
   ) %>% 
-  ggplot(aes(x = beta1_values, y = rate_reject, color = beta1_values, fill = beta1_values)) +
+  ggplot(aes(x = beta1_values, y = rate_reject,               # plot the rate of null rejection
+             color = beta1_values, fill = beta1_values)) +
   geom_bar(stat = "identity") +
-  labs(x = "True β1 Values",
+  labs(x = "True β1 Values",                                  # add labels
        y = "Percent of p-value < 0.05 (%)",
        caption = "Figure 2: Histogram of power of test (% of null rejected)"
        ) +
-  theme(legend.position = "none")
+  theme(legend.position = "none")                             # remove legend because unnecessary
 
 ```
 
 Per above, we see that as effect size rises, power of the test increases. This aligns with our understanding of effect size and power of the test. If we think of effect size as the distance between two curves' center, then it makes sense that our power increases as this distance increases. 
 
-### Average Estimates of $\hat\beta_1$ vs True $\beta_1$ in Two Situations
-We could also plot the overall average estimates of $\hat\beta_1$ compared against the true $\beta_1$ and overlay the average estimate for $\hat\beta_1$ from samples with rejected null. 
+### Average Estimates of β̂1 vs True β1 in Two Situations
+We could also plot the overall average estimates of β̂1  compared against the true β1 and overlay the average estimate for β̂1 from samples with rejected null. 
 
 ```{r slr_estimates}
 
+# make new df that contains average beta1 estimate for rejected nulls per true beta1
 rejected_avg_beta <- beta_value_df %>% 
   filter(p_val < 0.05) %>%
   group_by(beta1_values) %>% 
   summarize(mean_beta_reject = mean(beta1_hat)) %>% 
   mutate(beta1_values = as_factor(beta1_values))
 
+# new df contains total average beta1 estimate per true beta1
 total_avg_beta <- beta_value_df %>% 
   group_by(beta1_values) %>% 
   summarize(mean_beta1_hat = mean(beta1_hat)) %>% 
   mutate(beta1_values = as_factor(beta1_values))
-  
 
+
+
+# merge df above for easy plotting group of "total vs null-rejected"
 left_join(rejected_avg_beta, total_avg_beta, by = "beta1_values") %>% 
   pivot_longer(mean_beta_reject:mean_beta1_hat,
                names_to = "betahat",
                values_to = "mean_value") %>% 
   ggplot(aes(x = beta1_values, y = mean_value, color = betahat)) +
-  geom_point(aes(group = betahat), alpha = 0.7) +
-  geom_line(aes(group = betahat), alpha = 0.7) +
-  labs(x = "True β1 Values",
-       y = "Average β̂1 p-value < 0.05 (%)",
+  geom_point(aes(group = betahat), alpha = 0.7) +                   # point plot
+  geom_line(aes(group = betahat), alpha = 0.7) +                    # line plot
+  labs(x = "True β1 values",
+       y = "Average β̂1 estimate value",
        caption = "Comparison of average values for all β1 estimates with average β1 values in samples with rejected null; both grouped by true β1 values"
        ) +
-  scale_color_discrete(name = "Lines", labels = c("Average β1 - rejected null", "Average β1 - all"))
+  scale_color_discrete(name = "Lines",                              # change legend labels
+                       labels = c("Average β1 - rejected null", "Average β1 - all"))
   
 ```
 
+Is the sample average of β̂ 1 across tests for which the null is rejected approximately equal to the true value of β1? Why or why not?
