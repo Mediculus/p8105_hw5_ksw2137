@@ -92,19 +92,14 @@ We have 20 files that contains 8-weeks longitudinal study result files for 10 su
 
 ```{r data_read}
 
-# stores file names inside specified path and turn it into r x 1 tibble
-files <- list.files("./data") %>% 
-  tibble::enframe(name = NULL) %>%
-  rename("file_name" = value)
-
-# maps read_csv to iterate reading all the files based on files above
-# and make a listcol out of the read contents, then unnested to get a proper tibble
-exp_df <- files %>% 
-  mutate(
-    weekly_data = map(file_name, ~read_csv(str_c("./data/", .x)))
+exp_df <- list.files("./data") %>%                                # makes a list of filenames under data folder
+  tibble::enframe(name = NULL) %>%                                # turns list into a row x 1 column tibble
+  rename("file_name" = value) %>%                                 # rename column
+  mutate(                                                         # maps read_csv to iterate based on "filenames"
+    weekly_data = map(file_name, ~read_csv(str_c("./data/", .x))) # stores read data as listcol 
   ) %>% 
-  unnest()
-  
+  unnest()                                                        # unnest data to expand listcol into tibble 
+
 ```
 
 Now that we have our dataframe, we need to clean it up.
