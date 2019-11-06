@@ -74,7 +74,7 @@ new_iris <-                                                             # a data
 
 ```
 
-The `new_iris` variable stores new dataframe after applying `avgchar_na_replace` function with `purrr::map2` (`.x` for dataframe and `.y` for character input). If a column is numeric, it will automatically input average of column. Example: `r round(mean(pull(iris_with_missing, Sepal.Length), na.rm = TRUE), 1)`, which is the average of available numbers in `Sepal.Length` column, replaces `NA` in that column. `skimr::skim(new_iris)` reveals no missing variables.
+The `new_iris` variable stores new dataframe after applying `avgchar_na_replace` function with `purrr::map2` (`.x` for dataframe and `.y` for character input). If a column is numeric, it will automatically input average of column. Example: `r round(mean(pull(iris_with_missing, Sepal.Length), na.rm = TRUE), 1)`, which is the average of available numbers in `Sepal.Length` column, replaces `NA` in that column. `skimr::skim(new_iris)` reveals no missing variables. 
 
 # Problem 2 
 We have 20 files that contains 8-weeks longitudinal study result files for 10 subjects under experiment and control arm. First, we need to consolidate this into 1 dataframe.
@@ -253,11 +253,11 @@ left_join(rejected_avg_beta, total_avg_beta, by = "beta1_values") %>%
   geom_line(aes(group = betahat), alpha = 0.7) +                    # line plot
   labs(x = "True β1 values",
        y = "Average β̂1 estimate value",
-       caption = "Comparison of average values for all β1 estimates with average β1 values in samples with rejected null; both grouped by true β1 values"
+       caption = "Figure 3: Comparison of average values for all β1 estimates with average β1 values in samples with rejected null; both grouped by true β1 values"
        ) +
   scale_color_discrete(name = "Lines",                              # change legend labels
                        labels = c("Average β1 - rejected null", "Average β1 - all"))
   
 ```
 
-Is the sample average of β̂ 1 across tests for which the null is rejected approximately equal to the true value of β1? Why or why not?
+Per above, our average of β̂1 estimate of the rejected nulls are only approximately equal at β1 = 0 and as it approaches β1 = 6. The reason is likely because we are taking a "smaller sample" of the β̂1 values (due to filters). As in our previous figure 2, as our effect size gets larger, we are "capturing" more data points as well, which makes our average a better estimate (less biased). This is analogous to taking a larger sample size to approach normality. β̂1 at 0 is approximately equal to the β1 is a slightly unique case as it behaves like the "opposite" of β1 = 6. Where β1 = 6 captures "most" of the estimates, β1 = 0 captures "almost none", thus also closely approximating the true β1. 
